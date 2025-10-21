@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dysarthria Classifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 40px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-section form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .file-input-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        #audioFile {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading {
+            display: none;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .success {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #1a365d;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #822727;
+        }
+
+        .result-content {
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        .prediction-label {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .confidence-score {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Instructions Section */
+        .instructions {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+        }
+
+        .instructions h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .instructions p {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .upload-section {
+                padding: 20px;
+            }
+
+            button {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dysarthria Classifier</h1>
+        
+        <div class="upload-section">
+            <form id="uploadForm">
+                <div class="file-input-container">
+                    <input type="file" id="audioFile" accept=".wav" required>
+                </div>
+                <button type="submit">Analyze Audio</button>
+            </form>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Analyzing your audio file...</p>
+        </div>
+
+        <div id="result" class="result">
+            <div class="result-content">
+                <div class="prediction-label"></div>
+                <div class="confidence-score"></div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h2>How to Use</h2>
+            <p>Upload a WAV audio file using the form above. Our AI model will analyze the audio and determine if it contains speech patterns indicative of dysarthria. Results will include both the prediction and confidence level.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            if (!file) {
+                showError('Please select a file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                loading.style.display = 'block';
+                result.style.display = 'none';
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const predictionText = `${data.prediction}`;
+                    const confidenceText = `Confidence: ${(data.confidence * 100).toFixed(2)}%`;
+                    
+                    const resultDiv = document.getElementById('result');
+                    const predictionLabel = resultDiv.querySelector('.prediction-label');
+                    const confidenceScore = resultDiv.querySelector('.confidence-score');
+                    
+                    predictionLabel.textContent = predictionText;
+                    confidenceScore.textContent = confidenceText;
+                    
+                    showSuccess();
+                } else {
+                    showError(data.error || 'An error occurred during analysis.');
+                }
+            } catch (error) {
+                showError('An error occurred while processing your request.');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        function showError(message) {
+            const result = document.getElementById('result');
+            result.className = 'result error';
+            result.querySelector('.result-content').innerHTML = `<div class="prediction-label">${message}</div>`;
+            result.style.display = 'block';
+        }
+
+        function showSuccess() {
+            const result = document.getElementById('result');
+            result.className = 'result success';
+            result.style.display = 'block';
+        }
+
+        // Add drag and drop functionality
+        const uploadSection = document.querySelector('.upload-section');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadSection.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadSection.addEventListener(eventName, () => {
+                uploadSection.style.borderColor = '#667eea';
+                uploadSection.style.background = 'rgba(102, 126, 234, 0.1)';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadSection.addEventListener(eventName, () => {
+                uploadSection.style.borderColor = '#cbd5e0';
+                uploadSection.style.background = 'transparent';
+            });
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            document.getElementById('audioFile').files = files;
+        });
+    </script>
+</body>
+</html>
